@@ -205,4 +205,60 @@ mod tests {
     fn u128_first_last_bench_vec_1000_swap_drop(b: &mut Bencher) {
         first_last!(b, u128, swap_drop);
     }
+
+    macro_rules! first_only {
+         ($b:expr, $int:ty $(, $fn_name: expr)?) => {
+            let v: Vec<$int> = (0..1024).collect();
+            $b.iter(|| {
+                let mut v = v.clone();
+                for _ in 0..512 {
+                    test::black_box($($fn_name)?(&mut v, 0 as usize));
+                }
+                v
+            })
+        };
+     }
+
+    #[bench]
+    fn first_only_bench_1000_overhead(b: &mut Bencher) {
+        first_only!(b, usize);
+    }
+
+    #[bench]
+    fn first_only_bench_vec_1000_swap_remove(b: &mut Bencher) {
+        first_only!(b, usize, swap_remove);
+    }
+
+    #[bench]
+    fn first_only_bench_vec_1000_swap_drop(b: &mut Bencher) {
+        first_only!(b, usize, swap_drop);
+    }
+
+    macro_rules! last_only {
+         ($b:expr, $int:ty $(, $fn_name: expr)?) => {
+            let v: Vec<$int> = (0..1024).collect();
+            $b.iter(|| {
+                let mut v = v.clone();
+                for idx in (0..v.len()).rev() {
+                    test::black_box($($fn_name)?(&mut v, idx as usize));
+                }
+                v
+            })
+        };
+     }
+
+    #[bench]
+    fn last_only_bench_1000_overhead(b: &mut Bencher) {
+        last_only!(b, usize);
+    }
+
+    #[bench]
+    fn last_only_bench_vec_1000_swap_remove(b: &mut Bencher) {
+        last_only!(b, usize, swap_remove);
+    }
+
+    #[bench]
+    fn last_only_bench_vec_1000_swap_drop(b: &mut Bencher) {
+        last_only!(b, usize, swap_drop);
+    }
 }
