@@ -78,7 +78,7 @@ mod tests {
     use test::Bencher;
 
     macro_rules! default_bench {
-        ($b:expr, $int:ty $(, $fn_name: expr)?) => {
+        ($black:expr, $b:expr, $int:ty $(, $fn_name: expr)?) => {
             let mut rng = 43;
             let v: Vec<$int> = (0..1024).collect();
             $b.iter(|| {
@@ -86,6 +86,7 @@ mod tests {
                 for _ in 0..512 {
                     rng = rng_next(rng);
                     let idx = (rng >> 32) % 512;
+                    let idx = if $black { test::black_box(idx) } else { idx };
                     ($($fn_name)?(&mut v, idx as usize));
                 }
                 v
@@ -93,38 +94,8 @@ mod tests {
         };
     }
 
-    #[bench]
-    fn bench_1000_overhead(b: &mut Bencher) {
-        default_bench!(b, usize);
-    }
-
-    #[bench]
-    fn bench_vec_1000_swap_remove(b: &mut Bencher) {
-        default_bench!(b, usize, swap_remove);
-    }
-
-    #[bench]
-    fn bench_vec_1000_swap_drop(b: &mut Bencher) {
-        default_bench!(b, usize, swap_drop);
-    }
-
-    #[bench]
-    fn u128_bench_1000_overhead(b: &mut Bencher) {
-        default_bench!(b, u128);
-    }
-
-    #[bench]
-    fn u128_bench_vec_1000_swap_remove(b: &mut Bencher) {
-        default_bench!(b, u128, swap_remove);
-    }
-
-    #[bench]
-    fn u128_bench_vec_1000_swap_drop(b: &mut Bencher) {
-        default_bench!(b, u128, swap_drop);
-    }
-
     macro_rules! fatstruct {
-        ($b:expr $(, $fn_name:expr)?) => {
+        ($black:expr, $b:expr $(, $fn_name:expr)?) => {
             const LEN: usize = 1024 / core::mem::size_of::<usize>();
 
             #[derive(Clone)]
@@ -138,6 +109,7 @@ mod tests {
                 for _ in 0..512 {
                     rng = rng_next(rng);
                     let idx = (rng >> 32) % 512;
+                    let idx = if $black { test::black_box(idx) } else { idx };
                     ($($fn_name)?(&mut v, idx as usize));
                 }
                 v
@@ -145,30 +117,19 @@ mod tests {
         };
     }
 
-    #[bench]
-    fn fatstruct_bench_1000_overhead(b: &mut Bencher) {
-        fatstruct!(b);
-    }
-
-    #[bench]
-    fn fatstruct_bench_vec_1000_swap_remove(b: &mut Bencher) {
-        fatstruct!(b, swap_remove);
-    }
-
-    #[bench]
-    fn fatstruct_bench_vec_1000_swap_drop(b: &mut Bencher) {
-        fatstruct!(b, swap_drop);
-    }
-
     macro_rules! first_last {
-         ($b:expr, $int:ty $(, $fn_name: expr)?) => {
+        ($black:expr, $b:expr, $int:ty $(, $fn_name: expr)?) => {
             let v: Vec<$int> = (0..1024).collect();
             $b.iter(|| {
                 let mut v = v.clone();
                 let mut last = v.len() - 2;
                 for _ in 0..512 {
-                    ($($fn_name)?(&mut v, 0 as usize));
-                    ($($fn_name)?(&mut v, last as usize));
+                    let idx = 0;
+                    let idx = if $black { test::black_box(idx) } else { idx };
+                    ($($fn_name)?(&mut v, idx as usize));
+                    let idx = last;
+                    let idx = if $black { test::black_box(idx) } else { idx };
+                    ($($fn_name)?(&mut v, idx as usize));
                     last -= 2;
                 }
                 v
@@ -176,89 +137,172 @@ mod tests {
         };
      }
 
-    #[bench]
-    fn first_last_bench_1000_overhead(b: &mut Bencher) {
-        first_last!(b, usize);
-    }
-
-    #[bench]
-    fn first_last_bench_vec_1000_swap_remove(b: &mut Bencher) {
-        first_last!(b, usize, swap_remove);
-    }
-
-    #[bench]
-    fn first_last_bench_vec_1000_swap_drop(b: &mut Bencher) {
-        first_last!(b, usize, swap_drop);
-    }
-
-    #[bench]
-    fn u128_first_last_bench_1000_overhead(b: &mut Bencher) {
-        first_last!(b, u128);
-    }
-
-    #[bench]
-    fn u128_first_last_bench_vec_1000_swap_remove(b: &mut Bencher) {
-        first_last!(b, u128, swap_remove);
-    }
-
-    #[bench]
-    fn u128_first_last_bench_vec_1000_swap_drop(b: &mut Bencher) {
-        first_last!(b, u128, swap_drop);
-    }
-
     macro_rules! first_only {
-         ($b:expr, $int:ty $(, $fn_name: expr)?) => {
+        ($black:expr, $b:expr, $int:ty $(, $fn_name: expr)?) => {
             let v: Vec<$int> = (0..1024).collect();
             $b.iter(|| {
                 let mut v = v.clone();
                 for _ in 0..512 {
-                   ($($fn_name)?(&mut v, 0 as usize));
-                }
-                v
-            })
-        };
-     }
-
-    #[bench]
-    fn first_only_bench_1000_overhead(b: &mut Bencher) {
-        first_only!(b, usize);
-    }
-
-    #[bench]
-    fn first_only_bench_vec_1000_swap_remove(b: &mut Bencher) {
-        first_only!(b, usize, swap_remove);
-    }
-
-    #[bench]
-    fn first_only_bench_vec_1000_swap_drop(b: &mut Bencher) {
-        first_only!(b, usize, swap_drop);
-    }
-
-    macro_rules! last_only {
-         ($b:expr, $int:ty $(, $fn_name: expr)?) => {
-            let v: Vec<$int> = (0..1024).collect();
-            $b.iter(|| {
-                let mut v = v.clone();
-                for idx in (0..v.len()).rev() {
+                    let idx = 0;
+                    let idx = if $black { test::black_box(idx) } else { idx };
                     ($($fn_name)?(&mut v, idx as usize));
                 }
                 v
             })
         };
-     }
+    }
 
-    #[bench]
-    fn last_only_bench_1000_overhead(b: &mut Bencher) {
-        last_only!(b, usize);
+    macro_rules! last_only {
+        ($black:expr, $b:expr, $int:ty $(, $fn_name: expr)?) => {
+            let v: Vec<$int> = (0..1024).collect();
+            $b.iter(|| {
+                let mut v = v.clone();
+                for idx in (0..v.len()).rev() {
+                    let idx = if $black { test::black_box(idx) } else { idx };
+                    ($($fn_name)?(&mut v, idx as usize));
+                }
+                v
+            })
+        };
     }
 
     #[bench]
-    fn last_only_bench_vec_1000_swap_remove(b: &mut Bencher) {
-        last_only!(b, usize, swap_remove);
+    fn bench_swap_remove(b: &mut Bencher) {
+        default_bench!(true, b, usize, swap_remove);
     }
 
     #[bench]
-    fn last_only_bench_vec_1000_swap_drop(b: &mut Bencher) {
-        last_only!(b, usize, swap_drop);
+    fn bench_swap_drop(b: &mut Bencher) {
+        default_bench!(true, b, usize, swap_drop);
+    }
+
+    #[bench]
+    fn u128_swap_remove(b: &mut Bencher) {
+        default_bench!(true, b, u128, swap_remove);
+    }
+
+    #[bench]
+    fn u128_swap_drop(b: &mut Bencher) {
+        default_bench!(true, b, u128, swap_drop);
+    }
+
+    #[bench]
+    fn fatstruct_swap_remove(b: &mut Bencher) {
+        fatstruct!(true, b, swap_remove);
+    }
+
+    #[bench]
+    fn fatstruct_swap_drop(b: &mut Bencher) {
+        fatstruct!(true, b, swap_drop);
+    }
+
+    #[bench]
+    fn first_last_swap_remove(b: &mut Bencher) {
+        first_last!(true, b, usize, swap_remove);
+    }
+
+    #[bench]
+    fn first_last_swap_drop(b: &mut Bencher) {
+        first_last!(true, b, usize, swap_drop);
+    }
+
+    #[bench]
+    fn u128_first_last_swap_remove(b: &mut Bencher) {
+        first_last!(true, b, u128, swap_remove);
+    }
+
+    #[bench]
+    fn u128_first_last_swap_drop(b: &mut Bencher) {
+        first_last!(true, b, u128, swap_drop);
+    }
+
+    #[bench]
+    fn first_only_swap_remove(b: &mut Bencher) {
+        first_only!(true, b, usize, swap_remove);
+    }
+
+    #[bench]
+    fn first_only_swap_drop(b: &mut Bencher) {
+        first_only!(true, b, usize, swap_drop);
+    }
+
+    #[bench]
+    fn last_only_swap_remove(b: &mut Bencher) {
+        last_only!(true, b, usize, swap_remove);
+    }
+
+    #[bench]
+    fn last_only_swap_drop(b: &mut Bencher) {
+        last_only!(true, b, usize, swap_drop);
+    }
+
+    #[bench]
+    fn no_blackbox_swap_remove(b: &mut Bencher) {
+        default_bench!(false, b, usize, swap_remove);
+    }
+
+    #[bench]
+    fn no_blackbox_swap_drop(b: &mut Bencher) {
+        default_bench!(false, b, usize, swap_drop);
+    }
+
+    #[bench]
+    fn no_blackbox_u128_swap_remove(b: &mut Bencher) {
+        default_bench!(false, b, u128, swap_remove);
+    }
+
+    #[bench]
+    fn no_blackbox_u128_swap_drop(b: &mut Bencher) {
+        default_bench!(false, b, u128, swap_drop);
+    }
+
+    #[bench]
+    fn no_blackbox_fatstruct_swap_remove(b: &mut Bencher) {
+        fatstruct!(false, b, swap_remove);
+    }
+
+    #[bench]
+    fn no_blackbox_fatstruct_swap_drop(b: &mut Bencher) {
+        fatstruct!(false, b, swap_drop);
+    }
+
+    #[bench]
+    fn no_blackbox_first_last_swap_remove(b: &mut Bencher) {
+        first_last!(false, b, usize, swap_remove);
+    }
+
+    #[bench]
+    fn no_blackbox_first_last_swap_drop(b: &mut Bencher) {
+        first_last!(false, b, usize, swap_drop);
+    }
+
+    #[bench]
+    fn no_blackbox_u128_first_last_swap_remove(b: &mut Bencher) {
+        first_last!(false, b, u128, swap_remove);
+    }
+
+    #[bench]
+    fn no_blackbox_u128_first_last_swap_drop(b: &mut Bencher) {
+        first_last!(false, b, u128, swap_drop);
+    }
+
+    #[bench]
+    fn no_blackbox_first_only_swap_remove(b: &mut Bencher) {
+        first_only!(false, b, usize, swap_remove);
+    }
+
+    #[bench]
+    fn no_blackbox_first_only_swap_drop(b: &mut Bencher) {
+        first_only!(false, b, usize, swap_drop);
+    }
+
+    #[bench]
+    fn no_blackbox_last_only_swap_remove(b: &mut Bencher) {
+        last_only!(false, b, usize, swap_remove);
+    }
+
+    #[bench]
+    fn no_blackbox_last_only_swap_drop(b: &mut Bencher) {
+        last_only!(false, b, usize, swap_drop);
     }
 }
