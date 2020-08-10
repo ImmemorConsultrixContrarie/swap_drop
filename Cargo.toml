@@ -1,5 +1,5 @@
 [package]
-name = "bench"
+name = "swap_drop"
 version = "0.1.0"
 authors = ["ImmConCon <somewhat.fluffy@gmail.com>"]
 edition = "2018"
