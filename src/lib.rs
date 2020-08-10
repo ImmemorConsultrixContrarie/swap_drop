@@ -86,7 +86,7 @@ mod tests {
                 for _ in 0..512 {
                     rng = rng_next(rng);
                     let idx = (rng >> 32) % 512;
-                    test::black_box($($fn_name)?(&mut v, idx as usize));
+                    ($($fn_name)?(&mut v, idx as usize));
                 }
                 v
             })
@@ -138,7 +138,7 @@ mod tests {
                 for _ in 0..512 {
                     rng = rng_next(rng);
                     let idx = (rng >> 32) % 512;
-                    test::black_box($($fn_name)?(&mut v, idx as usize));
+                    ($($fn_name)?(&mut v, idx as usize));
                 }
                 v
             })
@@ -167,8 +167,8 @@ mod tests {
                 let mut v = v.clone();
                 let mut last = v.len() - 2;
                 for _ in 0..512 {
-                    test::black_box($($fn_name)?(&mut v, 0 as usize));
-                    test::black_box($($fn_name)?(&mut v, last as usize));
+                    ($($fn_name)?(&mut v, 0 as usize));
+                    ($($fn_name)?(&mut v, last as usize));
                     last -= 2;
                 }
                 v
@@ -212,7 +212,7 @@ mod tests {
             $b.iter(|| {
                 let mut v = v.clone();
                 for _ in 0..512 {
-                    test::black_box($($fn_name)?(&mut v, 0 as usize));
+                   ($($fn_name)?(&mut v, 0 as usize));
                 }
                 v
             })
@@ -240,7 +240,7 @@ mod tests {
             $b.iter(|| {
                 let mut v = v.clone();
                 for idx in (0..v.len()).rev() {
-                    test::black_box($($fn_name)?(&mut v, idx as usize));
+                    ($($fn_name)?(&mut v, idx as usize));
                 }
                 v
             })
