@@ -5,12 +5,31 @@ extern crate alloc;
 use alloc::vec::Vec;
 use core::ptr;
 
-/// Like [`swap_remove`], but does not panic with index out of bounds
-/// and drops the item instead of returning it.
+/// Removes an element from the vector and drops it.
 ///
-/// If index is out of bounds, simply does nothing.
+/// The removed element is replaced by the last element of the vector.
 ///
-/// [`swap_remove`]: std::vec::Vec::swap_remove
+/// This does not preserve ordering, but is O(1).
+///
+/// Unlike [`swap_remove`] this function does not panic.
+/// In case of `index >= v.len()`,
+/// this function simply does nothing.
+///
+/// [`swap_remove`]: alloc::vec::Vec::swap_remove
+///
+/// # Examples
+///
+/// ```
+/// use swap_drop::swap_drop;
+///
+/// let mut v = vec!["foo", "bar", "baz", "qux"];
+///
+/// swap_drop(&mut v, 1);
+/// assert_eq!(v, ["foo", "qux", "baz"]);
+///
+/// v.swap_remove(0);
+/// assert_eq!(v, ["baz", "qux"]);
+/// ```
 pub fn swap_drop<T>(v: &mut Vec<T>, index: usize) {
     struct PanicGuard<'a, T> {
         v: &'a mut Vec<T>,
