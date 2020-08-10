@@ -125,12 +125,14 @@ mod tests {
 
     macro_rules! fatstruct {
         ($b:expr $(, $fn_name:expr)?) => {
+            const LEN: usize = 1024 / core::mem::size_of::<usize>();
+
             #[derive(Clone)]
-            struct Kilobyte([u8; 1024]);
-            const K: Kilobyte = Kilobyte([0;1024]);
+            struct Kilobyte([usize; LEN]);
+            let new = |int| Kilobyte([int; LEN]);
 
             let mut rng = 43;
-            let v = vec![K; 1024];
+            let v: Vec<_> = (0..1024).map(new).collect();
             $b.iter(|| {
                 let mut v = v.clone();
                 for _ in 0..512 {
